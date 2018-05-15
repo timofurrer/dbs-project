@@ -1,0 +1,43 @@
+version: '3'
+services:
+    db:
+        image: rethinkdb:latest
+        volumes:
+            - "dbdata:/data"
+        env_file:
+            - env
+        networks:
+            - backend_db
+    app:
+        build: ./app
+        env_file:
+            - env
+        environment:
+            # NOTE: only for development
+            - FLASK_APP=main.py
+            - FLASK_DEBUG=1
+        volumes:
+            - ./app:/app
+        networks:
+            - backend_db
+            - backend_web
+        depends_on:
+            - db
+        command: flask run --host=0.0.0.0
+    nginx:
+        image: nginx:1.13.9
+        ports:
+            - "8080:80"
+        volumes:
+            - ./nginx:/etc/nginx/conf.d
+        networks:
+            - backend_web
+        depends_on:
+            - app
+networks:
+    backend_db:
+        driver: bridge
+    backend_web:
+        driver: bridge
+volumes:
+    dbdata:
