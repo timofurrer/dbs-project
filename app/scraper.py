@@ -106,21 +106,21 @@ class Scraper:
                 location = location.group(1).strip() if location else None
                 customer = re.search("((?:[0-9][0-9]:[0-9][0-9])|to)\s(.*?) (from|is collecting)", full_trans)
                 customer = customer.group(2).strip() if customer else None
-                search_term = re.search("( is looking for )(.*)", full_trans)
-                search_term = search_term.group(2).strip() if search_term else None
 
                 transaction_type = TransactionType.identify(full_trans)
 
                 # some arbitrary text
-                # FIXME(TF): merge with searchterm
                 text = None
                 if transaction_type == TransactionType.RATED:
                     text = re.search(r"with (.*?)$", full_trans).group(1)
+                elif transaction_type == TransactionType.SEARCH:
+                    text = re.search("( is looking for )(.*)", full_trans)
+                    text = text.group(2).strip() if text else None
 
                 transaction = Transaction(
                         transaction_type,
                         timestamp, customer, location,
-                        brand, product, price, search_term, text)
+                        brand, product, price, text)
 
                 logger.debug("Got transaction %r", transaction)
                 logger.info("FULL TRANS %s", full_trans)

@@ -43,5 +43,4 @@ class Transaction(NamedTuple):
     brand: str
     product: str
     price: str
-    searchterm: str
     text: str
