@@ -6,6 +6,7 @@ import re
 import logging
 import asyncio
 import itertools
+from urllib.parse import urlparse
 from typing import List, Dict
 
 import maya
@@ -144,6 +145,11 @@ class Persister:
         except:
             pass
 
+        try:
+            await r.db("test").table_create("suppliers").run(connection)
+        except:
+            pass
+
         await asyncio.sleep(1)
 
         while True:
@@ -152,45 +158,61 @@ class Persister:
                 # producer is done
                 break
 
-            product_document = {
-                "name": str(transaction[1].product),
-                "brand": str(transaction[1].brand),
-                "price": str(transaction[1].price)
-            }
+            try:
+                async def __expand_cursor(c):
+                    records = []
+                    while (await c.fetch_next()):
+                        records.append(await c.next())
+                    return records
 
-            async def __expand_cursor(c):
-                records = []
-                while (await c.fetch_next()):
-                    records.append(await c.next())
-                return records
+                supplier_document_id = urlparse(transaction[0]).netloc
+                supplier_document = {
+                    "id": supplier_document_id
+                }
 
-            existing_product_document = await r.table("products").filter(
-                    product_document).pluck("id").run(connection)
-            existing_product_document = await __expand_cursor(existing_product_document)
+                existing_supplier_document = await r.table("suppliers").get(
+                        supplier_document_id).run(connection)
 
-            if not existing_product_document:
-                product_document_insert = await r.table("products").insert(
-                        product_document).run(connection)
-                product_document_id = product_document_insert["generated_keys"][0]
-                logger.info("Inserting new Product %s", product_document)
-            else:
-                product_document_id = existing_product_document[0]["id"]
+                if not existing_supplier_document:
+                    await r.table("suppliers").insert(supplier_document).run(connection)
+                    logger.info("Inserting new Supplier %s", supplier_document_id)
 
-            transaction_document = {
-                "type": str(transaction[1].transaction_type),
-                "timestamp": str(transaction[1].timestamp),
-                "location": str(transaction[1].location),
-                "customer": str(transaction[1].customer),
-                "product_id": product_document_id
-            }
+                product_document = {
+                    "name": str(transaction[1].product),
+                    "brand": str(transaction[1].brand),
+                    "price": str(transaction[1].price)
+                }
 
-            # only insert the transaction if it does not exist yet
-            existing_transaction_document = await r.table("transactions").filter(
-                    transaction_document).limit(1).run(connection)
-            existing_transaction_document = await __expand_cursor(existing_transaction_document)
-            if not existing_transaction_document:
-                logger.info("Inserting new Transaction %s", transaction_document)
-                await r.table("transactions").insert(transaction_document).run(connection)
+                existing_product_document = await r.table("products").filter(
+                        product_document).pluck("id").run(connection)
+                existing_product_document = await __expand_cursor(existing_product_document)
+
+                if not existing_product_document:
+                    product_document_insert = await r.table("products").insert(
+                            product_document).run(connection)
+                    product_document_id = product_document_insert["generated_keys"][0]
+                    logger.info("Inserting new Product %s", product_document)
+                else:
+                    product_document_id = existing_product_document[0]["id"]
+
+                transaction_document = {
+                    "type": str(transaction[1].transaction_type),
+                    "timestamp": str(transaction[1].timestamp),
+                    "location": str(transaction[1].location),
+                    "customer": str(transaction[1].customer),
+                    "product_id": product_document_id,
+                    "supplier_id": supplier_document_id
+                }
+
+                # only insert the transaction if it does not exist yet
+                existing_transaction_document = await r.table("transactions").filter(
+                        transaction_document).limit(1).run(connection)
+                existing_transaction_document = await __expand_cursor(existing_transaction_document)
+                if not existing_transaction_document:
+                    logger.info("Inserting new Transaction %s", transaction_document)
+                    await r.table("transactions").insert(transaction_document).run(connection)
+            except Exception as exc:
+                logger.error("Failed to insert Transaction %s because of %s", str(transaction), str(exc))
 
 
 if __name__ == "__main__":
