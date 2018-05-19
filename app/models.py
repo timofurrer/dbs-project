@@ -13,6 +13,7 @@ class TransactionType(Enum):
     DELIVERY = "delivery"
     PICKUP = "pickup"
     RATED = "rated"
+    ANSWERING = "answering"
     OTHER = "other"
 
     @classmethod
@@ -31,6 +32,8 @@ class TransactionType(Enum):
             return cls.PICKUP
         elif "rated" in text:
             return cls.RATED
+        elif "is answering":
+            return cls.ANSWERING
         else:
             return cls.OTHER
 

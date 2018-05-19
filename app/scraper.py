@@ -104,7 +104,7 @@ class Scraper:
                 price = __extract_attribute("price")
                 location = re.search("from(?: our store in)? (.*?)( just | is | rated |$)", full_trans)
                 location = location.group(1).strip() if location else None
-                customer = re.search("((?:[0-9][0-9]:[0-9][0-9]\xa0)|to )([^\s]*?) (from|is collecting)", full_trans)
+                customer = re.search("((?:[0-9][0-9]:[0-9][0-9]\xa0)|to )([^\s]*?) (from|is collecting|is answering)", full_trans)
                 customer = customer.group(2).strip() if customer else None
 
                 transaction_type = TransactionType.identify(full_trans)
@@ -116,6 +116,8 @@ class Scraper:
                 elif transaction_type == TransactionType.SEARCH:
                     text = re.search("( is looking for )(.*)", full_trans)
                     text = text.group(2).strip() if text else None
+                elif transaction_type == TransactionType.ANSWERING:
+                    text = re.search(r"is answering (.*)", full_trans).group(1)
 
                 transaction = Transaction(
                         transaction_type,
