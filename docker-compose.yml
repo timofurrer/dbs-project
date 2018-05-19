@@ -34,7 +34,7 @@ services:
             - backend_web
         depends_on:
             - db
-        command: flask run --host=0.0.0.0
+        command: gunicorn --worker-class gevent -w 1 -b 0.0.0.0:5000 main:app
     nginx:
         image: nginx:1.13.9
         ports:

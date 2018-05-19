@@ -34,7 +34,7 @@ HEADERS = {
 }
 
 GET_PARAMS = {
-        "minTransactionTime": "2018-05-16T20:38:00",  # NOTE(TF): doesn't seem to affect the result at all
+    "minTransactionTime": "2018-05-16T20:38:00",  # NOTE(TF): doesn't seem to affect the result at all
     "languageId": 2,
     "_": 42  # NOTE(TF): what is this field?!
 }

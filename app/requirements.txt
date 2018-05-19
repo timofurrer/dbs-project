@@ -1,5 +1,9 @@
+gunicorn
+gunicorn[gevent]
 flask
+flask-socketio
 beautifulsoup4
 aiohttp
 maya
 rethinkdb
+gevent
