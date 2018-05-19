@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+
+{% block title %}LIVE - Digitec / Galaxus{% endblock %}
+
+{% block body %}
+
+<div class="row">
+    <ul id="transaction-list" class="collection">
+        {% for transaction in transactions %}
+        <li class="collection-item">{{ transaction }}</li>
+        {% endfor %}
+    </ul>
+</div>
+
+<script src="https://cdn.socket.io/socket.io-1.3.7.js"></script>
+<script>
+var transactionList = document.getElementById('transaction-list');
+var socket = io.connect('http://' + document.domain + ':' + location.port);
+socket.on('new_transaction', function(data) {
+  transactionList.innerHTML = '<li class="collection-item"><pre><code class="json">' + JSON.stringify(data, null, 2) + '</code></pre></li>' + transactionList.innerHTML;
+});
+</script>
+
+{% endblock %}
