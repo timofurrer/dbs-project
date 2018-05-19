@@ -188,32 +188,36 @@ class Persister:
                     await r.table("suppliers").insert(supplier_document).run(connection)
                     logger.info("Inserting new Supplier %s", supplier_document_id)
 
-                product_document = {
-                    "name": str(transaction[1].product),
-                    "brand": str(transaction[1].brand),
-                    "price": str(transaction[1].price)
-                }
+                product_document_id = None
+                if transaction[1].product is not None and transaction[1].brand is not None:
+                    product_document = {
+                        "name": str(transaction[1].product),
+                        "brand": str(transaction[1].brand),
+                        "price": str(transaction[1].price)
+                    }
 
-                existing_product_document = await r.table("products").filter(
-                        product_document).pluck("id").run(connection)
-                existing_product_document = await __expand_cursor(existing_product_document)
+                    existing_product_document = await r.table("products").filter(
+                            product_document).pluck("id").run(connection)
+                    existing_product_document = await __expand_cursor(existing_product_document)
 
-                if not existing_product_document:
-                    product_document_insert = await r.table("products").insert(
-                            product_document).run(connection)
-                    product_document_id = product_document_insert["generated_keys"][0]
-                    logger.info("Inserting new Product %s", product_document)
-                else:
-                    product_document_id = existing_product_document[0]["id"]
+                    if not existing_product_document:
+                        product_document_insert = await r.table("products").insert(
+                                product_document).run(connection)
+                        product_document_id = product_document_insert["generated_keys"][0]
+                        logger.info("Inserting new Product %s", product_document)
+                    else:
+                        product_document_id = existing_product_document[0]["id"]
 
                 transaction_document = {
                     "type": str(transaction[1].transaction_type),
                     "timestamp": str(transaction[1].timestamp),
                     "location": str(transaction[1].location),
                     "customer": str(transaction[1].customer),
-                    "product_id": product_document_id,
                     "supplier_id": supplier_document_id,
                 }
+
+                if product_document_id is not None:
+                    transaction_document["product_id"] = product_document_id
 
                 if transaction[1].text is not None:
                     transaction_document["text"] = str(transaction[1].text)
