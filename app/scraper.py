@@ -102,9 +102,9 @@ class Scraper:
                 brand = __extract_attribute("brand")
                 product = __extract_attribute("product")
                 price = __extract_attribute("price")
-                location = re.search("from (.*)( just | is )", full_trans)
+                location = re.search("from(?: our store in)? (.*?)( just | is |$)", full_trans)
                 location = location.group(1).strip() if location else None
-                customer = re.search("([0-9][0-9]:[0-9][0-9])(.*) from", full_trans)
+                customer = re.search("((?:[0-9][0-9]:[0-9][0-9])|to)\s([A-Z]*\.) (from|is collecting)", full_trans)
                 customer = customer.group(2).strip() if customer else None
                 search_term = re.search("( is looking for )(.*)", full_trans)
                 search_term = search_term.group(2).strip() if search_term else None
@@ -115,9 +115,10 @@ class Scraper:
                         brand, product, price, search_term)
 
                 logger.debug("Got transaction %r", transaction)
+                logger.info("FULL TRANS %s", full_trans)
                 transactions.append(transaction)
-            except Exception as e:
-                logger.error("Unable to parse transaction: '%s'", full_trans)
+            except Exception as exc:
+                logger.error("Unable to parse transaction: '%s': %s", full_trans, str(exc))
 
         return transactions
 

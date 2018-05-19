@@ -10,6 +10,8 @@ class TransactionType(Enum):
     SEARCH = "search"
     VIEW = "view"
     REGISTRATION = "registration"
+    DELIVERY = "delivery"
+    PICKUP = "pickup"
     OTHER = "other"
 
     @classmethod
@@ -22,6 +24,10 @@ class TransactionType(Enum):
             return cls.VIEW
         elif "just registered as a" in text:
             return cls.REGISTRATION
+        elif "was sent to" in text:
+            return cls.DELIVERY
+        elif "is collecting" in text:
+            return cls.PICKUP
         else:
             return cls.OTHER
 
