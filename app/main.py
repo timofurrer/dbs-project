@@ -1,5 +1,6 @@
 from time import sleep
 
+import maya
 from flask import Flask, g, render_template, abort
 from flask_socketio import SocketIO
 import rethinkdb as r
@@ -59,6 +60,9 @@ def watch_transactions():
                     "product_id", r.table("products")).zip()
 
         full_transaction = full_transaction_query.run(connection).next()
+
+        full_transaction["timestamp"] = maya.MayaDT.from_datetime(
+                full_transaction["timestamp"]).rfc2822()
 
         socketio.emit("new_transaction", full_transaction)
 

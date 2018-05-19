@@ -98,7 +98,7 @@ class Scraper:
 
                 # parse response content attributes
                 timestamp = maya.parse(
-                        raw_transaction.get("data-transaction-time")).rfc2822()
+                        raw_transaction.get("data-transaction-time"), timezone="Europe/Zurich")
                 brand = __extract_attribute("brand")
                 product = __extract_attribute("product")
                 price = __extract_attribute("price")
@@ -210,7 +210,7 @@ class Persister:
 
                 transaction_document = {
                     "type": str(transaction[1].transaction_type),
-                    "timestamp": str(transaction[1].timestamp),
+                    "timestamp": transaction[1].timestamp.datetime(),
                     "location": str(transaction[1].location),
                     "customer": str(transaction[1].customer),
                     "supplier_id": supplier_document_id,
