@@ -102,17 +102,25 @@ class Scraper:
                 brand = __extract_attribute("brand")
                 product = __extract_attribute("product")
                 price = __extract_attribute("price")
-                location = re.search("from(?: our store in)? (.*?)( just | is |$)", full_trans)
+                location = re.search("from(?: our store in)? (.*?)( just | is | rated |$)", full_trans)
                 location = location.group(1).strip() if location else None
-                customer = re.search("((?:[0-9][0-9]:[0-9][0-9])|to)\s([A-Z]*\.) (from|is collecting)", full_trans)
+                customer = re.search("((?:[0-9][0-9]:[0-9][0-9])|to)\s(.*?) (from|is collecting)", full_trans)
                 customer = customer.group(2).strip() if customer else None
                 search_term = re.search("( is looking for )(.*)", full_trans)
                 search_term = search_term.group(2).strip() if search_term else None
 
+                transaction_type = TransactionType.identify(full_trans)
+
+                # some arbitrary text
+                # FIXME(TF): merge with searchterm
+                text = None
+                if transaction_type == TransactionType.RATED:
+                    text = re.search(r"with (.*?)$", full_trans).group(1)
+
                 transaction = Transaction(
-                        TransactionType.identify(full_trans),
+                        transaction_type,
                         timestamp, customer, location,
-                        brand, product, price, search_term)
+                        brand, product, price, search_term, text)
 
                 logger.debug("Got transaction %r", transaction)
                 logger.info("FULL TRANS %s", full_trans)
@@ -202,8 +210,11 @@ class Persister:
                     "location": str(transaction[1].location),
                     "customer": str(transaction[1].customer),
                     "product_id": product_document_id,
-                    "supplier_id": supplier_document_id
+                    "supplier_id": supplier_document_id,
                 }
+
+                if transaction[1].text is not None:
+                    transaction_document["text"] = str(transaction[1].text)
 
                 # only insert the transaction if it does not exist yet
                 existing_transaction_document = await r.table("transactions").filter(

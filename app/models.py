@@ -12,6 +12,7 @@ class TransactionType(Enum):
     REGISTRATION = "registration"
     DELIVERY = "delivery"
     PICKUP = "pickup"
+    RATED = "rated"
     OTHER = "other"
 
     @classmethod
@@ -28,6 +29,8 @@ class TransactionType(Enum):
             return cls.DELIVERY
         elif "is collecting" in text:
             return cls.PICKUP
+        elif "rated" in text:
+            return cls.RATED
         else:
             return cls.OTHER
 
@@ -41,3 +44,4 @@ class Transaction(NamedTuple):
     product: str
     price: str
     searchterm: str
+    text: str
