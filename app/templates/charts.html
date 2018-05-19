@@ -1,0 +1,61 @@
+{% extends "layout.html" %}
+
+{% block title %}LIVE - Digitec / Galaxus{% endblock %}
+
+{% block body %}
+
+<div class="row">
+    <ul id="transaction-list" class="collection">
+        {% for transaction in transactions %}
+        <li class="collection-item">{{ transaction }}</li>
+        {% endfor %}
+    </ul>
+    <canvas id="typeSupplierChart" width="400" height="400"></canvas>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.bundle.min.js" integrity="sha256-XF29CBwU1MWLaGEnsELogU6Y6rcc5nCkhhx89nFMIDQ=" crossorigin="anonymous"></script>
+<script>
+var ctx = document.getElementById("typeSupplierChart").getContext("2d");
+labels = JSON.parse('{{ labels | tojson | safe }}');
+datasets = JSON.parse('{{ datasets | tojson | safe }}');
+console.log(datasets);
+
+colors = [
+    "rgba(247,70,74,0.2)", // red
+    "rgba(253,180,92,0.2)", // yellow
+    "rgba(70,191,189,0.2)", // green
+];
+
+for(i in datasets) {
+    datasets[i].backgroundColor = colors[i];
+}
+
+data = {
+    labels: labels,
+    datasets: datasets,
+};
+
+var typeSupplierChart = new Chart(ctx, {
+    type: 'bar',
+    labels: labels,
+    data: data,
+    options: {
+        barValueSpacing: 20,
+        scales: {
+            yAxes: [{
+                ticks: {
+                    min: 0,
+                }
+            }],
+            xAxes: [{
+                ticks: {
+                    autoSkip: false,
+                },
+            }],
+        },
+    }
+});
+</script>
+
+{% endblock %}
+

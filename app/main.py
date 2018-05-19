@@ -1,4 +1,5 @@
 from time import sleep
+from collections import defaultdict
 
 import maya
 from flask import Flask, g, render_template, abort
@@ -70,6 +71,21 @@ def watch_transactions():
 @app.route('/')
 def index():
     return render_template("transactions.html")
+
+
+@app.route('/charts')
+def charts():
+    types = [x["type"] for x in r.table("transactions").pluck("type").distinct().order_by(r.asc("type")).run(g.db_conn)]
+
+    data = defaultdict(list)
+    for row in r.table("transactions").group(lambda t: t.pluck("type", "supplier_id")).order_by(r.asc("type")).count().ungroup().run(g.db_conn):
+        data[row["group"]["supplier_id"]].append(row["reduction"])
+
+    datasets = [{
+        "label": k,
+        "data": v} for k, v in data.items()]
+
+    return render_template("charts.html", labels=types, datasets=datasets)
 
 
 # start watching thread
