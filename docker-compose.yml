@@ -8,6 +8,15 @@ services:
             - env
         networks:
             - backend_db
+    scraper:
+        build: ./app
+        volumes:
+            - ./app:/app
+        networks:
+            - backend_db
+        depends_on:
+            - db
+        command: python scraper.py
     app:
         build: ./app
         env_file:
