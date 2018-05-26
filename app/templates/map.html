@@ -1,0 +1,139 @@
+{% extends "layout.html" %}
+
+{% block title %}LIVE - Digitec / Galaxus{% endblock %}
+
+{% block head %}
+{{ super() }}
+<style>
+    #map {
+        height: 500px;  /* The height is 400 pixels */
+        width: 100%;  /* The width is the width of the web page */
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+
+<div class="row">
+    <h1>LIVE MAP - Last Minute</h1>
+    <div id="map"></div>
+    <table id="keyTable">
+        <tr>
+            <td>Order:</td>
+            <td><img src="http://maps.google.com/mapfiles/ms/micons/red-dot.png"></td>
+            <td>Search:</td>
+            <td><img src="http://maps.google.com/mapfiles/ms/micons/orange-dot.png"></td>
+            <td>Delivery:</td>
+            <td><img src="http://maps.google.com/mapfiles/ms/micons/green-dot.png"></td>
+        </tr>
+        <tr>
+            <td>Pickup:</td>
+            <td><img src="http://maps.google.com/mapfiles/ms/micons/blue-dot.png"></td>
+            <td>Registration:</td>
+            <td><img src="http://maps.google.com/mapfiles/ms/micons/pink-dot.png"></td>
+            <td>View:</td>
+            <td><img src="http://maps.google.com/mapfiles/ms/micons/ltblue-dot.png"></td>
+        </tr>
+        <tr>
+            <td>Rated:</td>
+            <td><img src="http://maps.google.com/mapfiles/ms/micons/yellow-dot.png"></td>
+            <td>Answering:</td>
+            <td><img src="http://maps.google.com/mapfiles/ms/micons/yellow-dot.png"></td>
+            <td>Other:</td>
+            <td><img src="http://maps.google.com/mapfiles/ms/micons/purple-dot.png"></td>
+        </tr>
+    </table>
+    <script>
+        TransactionTypes = {
+            "TransactionType.ORDER": "http://maps.google.com/mapfiles/ms/micons/red-dot.png",
+            "TransactionType.SEARCH": "http://maps.google.com/mapfiles/ms/micons/orange-dot.png",
+            "TransactionType.DELIVERY": "http://maps.google.com/mapfiles/ms/micons/green-dot.png",
+            "TransactionType.PICKUP": "http://maps.google.com/mapfiles/ms/micons/blue-dot.png",
+            "TransactionType.REGISTRATION": "http://maps.google.com/mapfiles/ms/micons/pink-dot.png",
+            "TransactionType.VIEW": "http://maps.google.com/mapfiles/ms/micons/ltblue-dot.png",
+            "TransactionType.RATED": "http://maps.google.com/mapfiles/ms/micons/yellow-dot.png",
+            "TransactionType.ANSWERING": "http://maps.google.com/mapfiles/ms/micons/yellow-dot.png",
+            "TransactionType.OTHER": "http://maps.google.com/mapfiles/ms/micons/purple-dot.png"
+        };
+
+        var map;
+        // Initialize and add the map
+        function initMap() {
+            var country = "Switzerland"
+
+            var myOptions = {
+                zoom: 8,
+                mapTypeId: google.maps.MapTypeId.ROADMAP
+            };
+
+            map = new google.maps.Map(document.getElementById("map"), myOptions);
+
+                var geocoder = new google.maps.Geocoder();
+                geocoder.geocode( { 'address': country }, function(results, status) {
+                        if (status == google.maps.GeocoderStatus.OK) {
+                                map.setCenter(results[0].geometry.location);
+                        } else {
+                                alert("Could not find location: " + location);
+                        }
+                });
+        }
+
+        function showTransaction(transaction) {
+            position = {lat: transaction["geocode"]["lat"], lng: transaction["geocode"]["lng"]};
+            var marker = new google.maps.Marker({
+                position: position,
+                icon: TransactionTypes[transaction["type"]],
+                /*icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 10
+                },*/
+                map: map,
+                title: transaction["customer"] + " from " + transaction["geocode"]["address"],
+              });
+
+            transactionContent = beautifyTransaction(transaction);
+
+            var infowindow = new google.maps.InfoWindow({
+                content: transactionContent
+            });
+
+            marker.addListener('click', function() {
+                infowindow.open(map, marker);
+            });
+
+            setTimeout(function() {
+                marker.setMap(null);
+            }, 60000 * 2); // 2 minutes
+        }
+
+        function beautifyTransaction(transaction) {
+            return "<strong>" + transaction["supplier_id"] + "</strong><br>" +
+                "<hr>" +
+                "<strong>Customer</strong>: " + transaction["customer"] + "<br>" +
+                "<strong>From</strong>: " + transaction["geocode"]["address"] + "<br>" +
+                "<hr>" +
+                transaction["raw"];
+        }
+    </script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCf6PVnyB0qKT5NSkhY2tGT5pyDgcaMI4I&callback=initMap"></script>
+</div>
+<div class="row">
+    <h1>RAW Transactions</h1>
+    <ul id="transaction-list" class="collection">
+        {% for transaction in transactions %}
+        <li class="collection-item">{{ transaction }}</li>
+        {% endfor %}
+    </ul>
+</div>
+
+<script src="https://cdn.socket.io/socket.io-1.3.7.js"></script>
+<script>
+var transactionList = document.getElementById('transaction-list');
+var socket = io.connect('http://' + document.domain + ':' + location.port);
+socket.on('new_transaction', function(data) {
+    transactionList.innerHTML = '<li class="collection-item"><pre><code class="json">' + JSON.stringify(data, null, 2) + '</code></pre></li>' + transactionList.innerHTML;
+    showTransaction(data);
+});
+</script>
+
+{% endblock %}

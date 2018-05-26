@@ -8,6 +8,8 @@ import rethinkdb as r
 import gevent
 from gevent import Greenlet
 
+from geocoding import geocode
+
 app = Flask(__name__)
 socketio = SocketIO(app)
 
@@ -65,11 +67,20 @@ def watch_transactions():
         full_transaction["timestamp"] = maya.MayaDT.from_datetime(
                 full_transaction["timestamp"]).rfc2822()
 
+        # geocode location
+        if full_transaction["location"]:
+            full_transaction["geocode"] = geocode(full_transaction["location"])
+
         socketio.emit("new_transaction", full_transaction)
 
 
 @app.route('/')
 def index():
+    return render_template("map.html")
+
+
+@app.route('/transactions')
+def transactions():
     return render_template("transactions.html")
 
 

@@ -47,3 +47,4 @@ class Transaction(NamedTuple):
     product: str
     price: str
     text: str
+    raw: str

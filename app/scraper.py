@@ -125,7 +125,7 @@ class Scraper:
                 transaction = Transaction(
                         transaction_type,
                         timestamp, customer, location,
-                        brand, product, price, text)
+                        brand, product, price, text, full_trans)
 
                 logger.debug("Got transaction %r", transaction)
                 logger.info("FULL TRANS %s", full_trans)
@@ -217,6 +217,7 @@ class Persister:
                     "location": str(transaction[1].location),
                     "customer": str(transaction[1].customer),
                     "supplier_id": supplier_document_id,
+                    "raw": transaction[1].raw
                 }
 
                 if product_document_id is not None:
