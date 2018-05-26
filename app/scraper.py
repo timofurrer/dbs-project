@@ -61,19 +61,22 @@ class Scraper:
         Start scraping on the initialized URLs.
         """
         while True:  # fuck yeah!
-            async with aiohttp.ClientSession(headers=headers) as session:
-                # fetch feed URLs
-                responses = await asyncio.gather(*[loop.create_task(
-                    self._fetch(session, url, params)) for url in self.feed_urls])
+            try:
+                async with aiohttp.ClientSession(headers=headers) as session:
+                    # fetch feed URLs
+                    responses = await asyncio.gather(*[loop.create_task(
+                        self._fetch(session, url, params)) for url in self.feed_urls])
 
-                # aggregate feed URLs and parsed responses
-                transactions = itertools.chain(*[list(
-                    zip(itertools.repeat(u), t))
-                    for u, t in zip(self.feed_urls, map(self._parse, responses))])
+                    # aggregate feed URLs and parsed responses
+                    transactions = itertools.chain(*[list(
+                        zip(itertools.repeat(u), t))
+                        for u, t in zip(self.feed_urls, map(self._parse, responses))])
 
-                # add transactions to queue
-                for transaction in transactions:
-                    await self.transaction_queue.put(transaction)
+                    # add transactions to queue
+                    for transaction in transactions:
+                        await self.transaction_queue.put(transaction)
+            except Exception as exc:
+                logger.error("Failed to scrape with: %s", str(exc))
             await asyncio.sleep(15)
 
     def _parse(self, response: str) -> List[Transaction]:
