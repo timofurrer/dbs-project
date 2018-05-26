@@ -15,7 +15,7 @@
 {% block body %}
 
 <div class="row">
-    <h1>LIVE MAP - Last Minute</h1>
+    <h1>LIVE MAP - Last 10 Minutes</h1>
     <div id="map"></div>
     <table id="keyTable">
         <tr>
@@ -103,7 +103,7 @@
 
             setTimeout(function() {
                 marker.setMap(null);
-            }, 60000 * 2); // 2 minutes
+            }, 60000 * 10); // 2 minutes
         }
 
         function beautifyTransaction(transaction) {
