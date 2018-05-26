@@ -123,6 +123,7 @@
 var transactionList = document.getElementById('transaction-list');
 var socket = io.connect('http://' + document.domain + ':' + location.port);
 socket.on('new_transaction', function(data) {
+    console.log(data);
     showTransaction(data);
 });
 </script>
