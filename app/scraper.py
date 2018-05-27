@@ -105,6 +105,7 @@ class Scraper:
                 brand = __extract_attribute("brand")
                 product = __extract_attribute("product")
                 price = __extract_attribute("price")
+                currency = __extract_attribute("currency")
                 location = re.search("from(?: our store in)? (.*?)( just | is | rated |$)", full_trans)
                 location = location.group(1).strip() if location else None
                 customer = re.search("((?:[0-9][0-9]:[0-9][0-9]\xa0)|to )([^\s]*?) (from|is collecting|is answering)", full_trans)
@@ -122,10 +123,13 @@ class Scraper:
                 elif transaction_type == TransactionType.ANSWERING:
                     text = re.search(r"is answering (.*)", full_trans).group(1)
 
+                if price:
+                    price = float(re.sub(r'\W+$', '', price).replace("'", ''))
+
                 transaction = Transaction(
                         transaction_type,
                         timestamp, customer, location,
-                        brand, product, price, text, full_trans)
+                        brand, product, price, currency, text, full_trans)
 
                 logger.debug("Got transaction %r", transaction)
                 logger.info("FULL TRANS %s", full_trans)
@@ -196,7 +200,8 @@ class Persister:
                     product_document = {
                         "name": str(transaction[1].product),
                         "brand": str(transaction[1].brand),
-                        "price": str(transaction[1].price)
+                        "price": float(transaction[1].price),
+                        "currency": str(transaction[1].currency),
                     }
 
                     existing_product_document = await r.table("products").filter(

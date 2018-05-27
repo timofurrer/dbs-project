@@ -45,6 +45,7 @@ class Transaction(NamedTuple):
     location: str
     brand: str
     product: str
-    price: str
+    price: float
+    currency: str
     text: str
     raw: str
