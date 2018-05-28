@@ -55,23 +55,26 @@ def watch_transactions():
                     # "supplier_id", r.table("suppliers")).zip().run(connection)
     print("Started live feed for new transactions ...")
     for transaction in feed:
-        full_transaction_query = r.table("transactions").filter(
-                {"id": transaction["new_val"]["id"]}).eq_join(
-                        "supplier_id", r.table("suppliers")).zip()
-        if "product_id" in transaction["new_val"]:
-            full_transaction_query = full_transaction_query.eq_join(
-                    "product_id", r.table("products")).zip()
+        try:
+            full_transaction_query = r.table("transactions").filter(
+                    {"id": transaction["new_val"]["id"]}).eq_join(
+                            "supplier_id", r.table("suppliers")).zip()
+            if "product_id" in transaction["new_val"]:
+                full_transaction_query = full_transaction_query.eq_join(
+                        "product_id", r.table("products")).zip()
 
-        full_transaction = full_transaction_query.run(connection).next()
+            full_transaction = full_transaction_query.run(connection).next()
 
-        full_transaction["timestamp"] = maya.MayaDT.from_datetime(
-                full_transaction["timestamp"]).rfc2822()
+            full_transaction["timestamp"] = maya.MayaDT.from_datetime(
+                    full_transaction["timestamp"]).rfc2822()
 
-        # geocode location
-        if full_transaction["location"]:
-            full_transaction["geocode"] = geocode(full_transaction["location"])
+            # geocode location
+            if full_transaction["location"]:
+                full_transaction["geocode"] = geocode(full_transaction["location"])
 
-        socketio.emit("new_transaction", full_transaction)
+            socketio.emit("new_transaction", full_transaction)
+        except Exception as exc:
+            print(f"Error during transaction send {exc}")
 
 
 @app.route('/')
